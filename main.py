@@ -3,6 +3,7 @@ from blacksheep import Application, FromFiles, FromForm, get, post, json, not_fo
 from datetime import datetime, timedelta
 import subprocess
 import locale
+import serial
 
 import azure.cognitiveservices.speech as speechsdk
 from azure.storage.blob import BlobServiceClient, BlobSasPermissions, generate_blob_sas
@@ -34,8 +35,9 @@ container_name = "containerdeaudios"
 
 blob_service_client = BlobServiceClient.from_connection_string(conn_str="DefaultEndpointsProtocol=https;AccountName=armazenamentoequipe8;AccountKey=+Majaj4LeBbyZ5GnbgwkWV8ogvVuIaVMAu2qBNJGMEalD0FEdWjnvF/Zw8MsVdP8bdWfjLF208ac+ASt9jmM5w==;EndpointSuffix=core.windows.net")
 
-
 locale.setlocale( locale.LC_ALL, 'pt_BR.ISO8859-1')
+
+ser = serial.Serial('/dev/cu.usbserial-1130')
 
 @get("/callcenter/incidents")
 def list_incidents():
@@ -105,6 +107,7 @@ async def upload(files: FromFiles, form: FromForm):
             url = f"https://{account_name}.blob.core.windows.net/{container_name}/{blob_name}"
             user["emergencyBalance"] = 150.00
             user["indicidentAudio"] = f"{url}?{token}"
+            ser.write(bytes([255]))
 
         user["emergencyMode"] = True;
 
