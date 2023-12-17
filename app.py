@@ -1,17 +1,16 @@
 import whisper
-from blacksheep import Application, FromFiles, FromForm, get, post, json, not_found, status_code, ok
 from datetime import datetime, timedelta
 import subprocess
 import locale
 import serial
 
+from flask import (Flask, redirect, render_template, request,
+                   send_from_directory, url_for, jsonify, Response, abort)
+
 import azure.cognitiveservices.speech as speechsdk
 from azure.storage.blob import BlobServiceClient, BlobSasPermissions, generate_blob_sas
 
 model = whisper.load_model("base")
-
-app = Application()
-app.serve_files("static")
 
 database = list([
     {
@@ -39,49 +38,57 @@ locale.setlocale( locale.LC_ALL, 'pt_BR.ISO8859-1')
 
 ser = serial.Serial('/dev/cu.usbserial-1130')
 
-@get("/callcenter/incidents")
+app = Flask(__name__)
+
+@app.route('/static/<path:path>')
+def static_files(path):
+    return send_from_directory('static', path)
+
+@app.route("/callcenter/incidents", methods=['GET'])
 def list_incidents():
     incidents = list(filter(lambda u: u["emergencyMode"] == True, database))
-    return json(incidents)
+    return jsonify(incidents)
 
-@get("/recover/{document_id}")
+@app.route("/recover/{document_id}", methods=['GET'])
 def recover(document_id):
     user = next(filter(lambda u: u["documentId"] == document_id, database), None)
 
     if not user is None:
         user["emergencyMode"] = False
         user["indicidentAudio"] = ""
-        return ok("usuario normalizado")
+        return Response("usuario normalizado", 200)
     else:
-        return not_found("usuario nao encontrado")
+        abort(404)
+        return abort(Response("usuario nao encontrado"))
 
-@get("/balance/{document_id}")
+@app.route("/balance/{document_id}", methods=['GET'])
 def balance(document_id):
     print(document_id)
 
     user = next(filter(lambda u: u["documentId"] == document_id, database), None)
 
     if not user is None:
-        return json({
+        return jsonify({
             "balance":  locale.currency(user["emergencyBalance"] if user["emergencyMode"] else user["balance"], symbol=None)
         })
     else:
-        return status_code(404, {
+        abort(404)
+        return abort(jsonify({
             "message": "usuário não encontrado"
-        })
+        }))
 
 
-@post("/do-login")
-async def upload(files: FromFiles, form: FromForm):
+@app.route("/do-login", methods=['POST'])
+async def upload():
 
-    document_id = form.value["documentId"]
+    document_id = request.form["documentId"]
 
     user = next(filter(lambda u : u["documentId"] == document_id, database))
 
     file_path = f"audios/audio_{datetime.now().isoformat()}.webm"
 
     with open(file_path, mode="wb") as audio_file:
-        audio_file.write(files.value[0].data)
+        audio_file.write(request.files.value[0].data)
         audio_file.close()
 
     stt = speech_to_text2(file_path).lower()
@@ -111,7 +118,7 @@ async def upload(files: FromFiles, form: FromForm):
 
         user["emergencyMode"] = True;
 
-    return json({
+    return jsonify({
         "documentId": user["documentId"]
     })
 
@@ -160,6 +167,6 @@ def speech_to_text(file_path):
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print("Hello")
+    app.run()
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
