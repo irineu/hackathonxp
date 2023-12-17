@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+    <style>
+      a{
+        margin: 0px 5px;
+      }
+    </style>
+  <script>
+
+    fetch('/callcenter/incidents').then(response =>{
+            if(response.ok){
+                response.json().then(
+                    value => {
+
+                      value.forEach((incident, i) => {
+                        let li = document.createElement("li");
+                        li.innerText = "Incidente #"+(i+1)
+
+                        let btnRecover = document.createElement("a");
+                        btnRecover.innerText = "recover";
+                        btnRecover.href = "/recover/"+incident["documentId"]
+
+                        let btnAudio = document.createElement("a");
+                        btnAudio.innerText = "audio";
+                        btnAudio.href = incident["indicidentAudio"];
+
+                        li.appendChild(btnRecover)
+                        li.appendChild(btnAudio)
+
+                        document.getElementById("list").appendChild(li);
+                      });
+
+
+                    }
+                )
+            }else{
+                alert("Usuário invalido");
+                window.location.href = "index.html"
+            }
+        })
+
+  </script>
+</head>
+<body>
+<ul id="list">
+
+</ul>
+</body>
+</html>

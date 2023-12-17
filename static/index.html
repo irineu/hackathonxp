@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script>
+
+        let audioIN = { audio: true };
+        let mediaRecorder = null;
+        let audio = null;
+
+        function doLogin(){
+            document.getElementById("do-login").innerHTML = '<img src="images/loading.png">'
+            mediaRecorder.stop();
+        }
+
+        navigator.mediaDevices.getUserMedia(audioIN)
+        .then(function (mediaStreamObj) {
+
+            audio = document.querySelector('audio');
+
+            audio.onloadedmetadata = function (ev) {
+              audio.play();
+            };
+
+            mediaRecorder = new MediaRecorder(mediaStreamObj);
+
+            mediaRecorder.start();
+
+            mediaRecorder.ondataavailable = function (ev) {
+              dataArray.push(ev.data);
+            }
+
+            let dataArray = [];
+
+            mediaRecorder.onstop = function (ev) {
+
+                let audioData = new Blob(dataArray, { 'type': 'audio/webm' });
+
+                dataArray = [];
+
+                let audioSrc = window.URL.createObjectURL(audioData);
+
+                const sendAudioFile = file => {
+                    const formData = new FormData();
+                    formData.append('audio-file', file);
+                    formData.append('documentId', "39178931851");
+                    return fetch('/do-login', {
+                        method: 'POST',
+                        body: formData
+                    });
+                };
+
+                sendAudioFile(audioData).then(resp => {
+                    resp.json().then(response => {
+                        window.location.href = "home.html"
+                    });
+                });
+            }
+        }).catch(function (err) {
+            console.log(err.name, err.message);
+        });
+
+        setTimeout(()=>{
+            window.scrollTo(0, document.body.scrollHeight + 1000);
+        },500);
+    </script>
+
+    <style>
+        body {
+            background-color: #0d0e10;
+            margin: 0;
+            padding: 0;
+        }
+
+        .stage{
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            overflow: hidden;
+        }
+
+        .logo{
+            width: 40vw;
+            margin: 27vh auto;
+        }
+
+        .logo img {
+            width: 100%;
+        }
+
+        .login-form{
+            background-color: #FFF;
+            position: absolute;
+            width: 100vw;
+            bottom: 0;
+
+            font-family: Helvetica;
+
+            box-sizing: border-box;
+        }
+
+        .login-form div{
+            padding: 0 5vw;
+        }
+
+        button#do-login{
+            background-color: #fbc105;
+            width: 100vw;
+            border: 0;
+            padding: 1em;
+            font-size: 1em;
+            position: relative;
+            height: 6vh;
+        }
+
+        button#do-login img{
+            width: 1.5em;
+        }
+
+        h1, h2{
+            font-weight: 100;
+            position: relative;
+        }
+
+        h3.token{
+            border-top: 1px solid #EEE;
+            padding: 1em 0;
+            text-align: right;
+        }
+
+
+        button.change{
+            border: 2px solid #111;
+            background-color: #FFF;
+            font-size: .75em;
+            padding: .25em 1em;
+            position: absolute;
+            right: 0vw;
+        }
+    </style>
+
+</head>
+<body>
+
+<div class="stage">
+
+    <audio></audio>
+
+    <div class="logo">
+        <img src="images/logo.png">
+    </div>
+
+    <div class="login-form">
+        <div>
+            <h1>Irineu Sousa</h1>
+            <h2>CPF: 391.***.***-51 <button class="change">Alterar</button></h2>
+
+            <h3 class="token">Token 🔑</h3>
+        </div>
+
+        <button id="do-login" onclick="doLogin()">
+            Acessar com Biometria
+        </button>
+
+    </div>
+
+
+</div>
+
+
+</body>
+</html>

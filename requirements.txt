@@ -1,0 +1,5 @@
+azure-cognitiveservices-speech
+azure-identity
+azure-storage-blob
+blacksheep
+openai_whisper
