@@ -4,3 +4,6 @@ azure-storage-blob
 blacksheep
 openai_whisper
 pyserial
+Flask==2.2.2
+gunicorn
+Werkzeug==2.2.2
